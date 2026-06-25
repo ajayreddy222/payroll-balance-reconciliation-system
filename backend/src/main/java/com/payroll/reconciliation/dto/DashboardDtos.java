@@ -11,16 +11,8 @@ import java.util.List;
 public class DashboardDtos {
 
     /**
-     * Aggregated dashboard summary containing balance totals and breakdowns.
-     *
-     * @param currentBalance         the cumulative balance across all entries
-     * @param totalHours             the total hours worked across all entries
-     * @param totalActualEarnings    the total actual earnings computed from hours and rates
-     * @param totalPaystubAmount     the total paystub amounts received
-     * @param totalEmployerPayments  the total direct employer payments
-     * @param totalInsuranceDeductions the total insurance deductions
-     * @param balanceByYear          balance breakdown grouped by year
-     * @param balanceByProject       balance breakdown grouped by project
+     * Aggregated dashboard summary containing balance totals, vendor fee,
+     * employer margin analytics, and breakdowns by year and project.
      */
     public record DashboardSummary(
             BigDecimal currentBalance,
@@ -29,15 +21,46 @@ public class DashboardDtos {
             BigDecimal totalPaystubAmount,
             BigDecimal totalEmployerPayments,
             BigDecimal totalInsuranceDeductions,
+            BigDecimal totalVendorFee,
+            BigDecimal totalEmployerMargin,
             List<NamedAmount> balanceByYear,
-            List<NamedAmount> balanceByProject
+            List<NamedAmount> balanceByProject,
+            List<NamedAmount> vendorFeeByYear,
+            List<NamedAmount> employerMarginByYear,
+            List<ProjectMarginSummary> marginByProject
     ) {}
 
     /**
-     * A simple name-amount pair used for grouped balance data.
-     *
-     * @param name   the group name (e.g., year or project name)
-     * @param amount the aggregated amount for the group
+     * A simple name-amount pair used for grouped data.
      */
     public record NamedAmount(String name, BigDecimal amount) {}
+
+    /**
+     * Per-project margin summary showing vendor fee and employer margin totals.
+     */
+    public record ProjectMarginSummary(
+            Long projectId,
+            String projectName,
+            String clientName,
+            String vendorName,
+            BigDecimal totalHours,
+            BigDecimal totalVendorFee,
+            BigDecimal totalEmployerMargin,
+            BigDecimal vendorFeePerHour,
+            BigDecimal employerMarginPerHour,
+            List<MonthlyMarginDetail> monthlyBreakdown
+    ) {}
+
+    /**
+     * Monthly breakdown of vendor fee and employer margin for a project.
+     */
+    public record MonthlyMarginDetail(
+            String month,
+            BigDecimal hoursWorked,
+            BigDecimal clientPays,
+            BigDecimal vendorFee,
+            BigDecimal employerGets,
+            BigDecimal youGet,
+            BigDecimal employerMargin
+    ) {}
 }
