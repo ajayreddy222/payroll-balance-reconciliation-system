@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: payroll-reconciliation
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payroll_reconciliation
+    username: payroll
+    password: payroll
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+app:
+  jwt-secret: ${JWT_SECRET:change-this-secret-to-a-long-production-value-change-this-secret}
+  jwt-expiration-minutes: 480
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
