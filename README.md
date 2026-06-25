@@ -38,8 +38,9 @@ payroll-balance-reconciliation-system/
 │   │   ├── security/          # JWT filter, service, UserDetails
 │   │   └── service/           # Business logic
 │   └── src/main/resources/
-│       ├── application.yml    # App configuration
-│       └── db/migration/      # Flyway SQL migrations
+│       ├── application.yml        # Base app configuration
+│       ├── application-local.yml  # Local credentials (gitignored)
+│       └── db/migration/          # Flyway SQL migrations
 ├── frontend/                   # React SPA
 │   └── src/
 │       ├── api/               # Axios client
@@ -47,6 +48,8 @@ payroll-balance-reconciliation-system/
 │       ├── components/        # Shared layout components
 │       └── types/             # TypeScript type definitions
 ├── docker-compose.yml          # Full-stack Docker deployment
+├── start-app.bat               # Start both services
+├── stop-app.bat                # Stop both services
 └── README.md
 ```
 
@@ -68,22 +71,34 @@ payroll-balance-reconciliation-system/
 
 ## Local Development Setup
 
-### 1. Database
+### 1. Database (Remote - Neon)
 
-```bash
-# Option A: Docker
-docker run -d --name payroll-db \
-  -e POSTGRES_DB=payroll_reconciliation \
-  -e POSTGRES_USER=payroll \
-  -e POSTGRES_PASSWORD=payroll \
-  -p 5432:5432 postgres:16-alpine
+The application uses a remote PostgreSQL database hosted on [Neon](https://neon.tech). No local database setup is required.
 
-# Option B: Local PostgreSQL
-# Create database: payroll_reconciliation
-# User: payroll / Password: payroll
+Database credentials are stored in `backend/src/main/resources/application-local.yml` (gitignored). Create this file with your Neon connection details:
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://<your-neon-host>/payroll_reconciliation?sslmode=require
+    username: <your-neon-username>
+    password: <your-neon-password>
+
+app:
+  jwt-secret: <your-jwt-secret>
 ```
 
-### 2. Backend
+### 2. Quick Start (Single Click)
+
+```bash
+# Start both backend and frontend
+start-app.bat
+
+# Stop both services
+stop-app.bat
+```
+
+### 3. Backend (Manual)
 
 ```bash
 cd backend
@@ -92,7 +107,7 @@ mvn clean spring-boot:run
 
 Runs on http://localhost:8080
 
-### 3. Frontend
+### 4. Frontend (Manual)
 
 ```bash
 cd frontend
@@ -102,7 +117,7 @@ npm run dev
 
 Runs on http://localhost:5173
 
-### 4. Docker Compose (full stack)
+### 5. Docker Compose (full stack)
 
 ```bash
 docker-compose up --build
