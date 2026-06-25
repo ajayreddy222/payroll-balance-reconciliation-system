@@ -24,6 +24,29 @@ A full-stack application that replaces manual Excel-based payroll balance tracki
 7. **Insurance Deductions** reduce balance directly
 8. **Yearly Carry-Forward**: Previous year's ending balance becomes next year's opening balance
 
+### Vendor Fee & Employer Margin Analytics
+
+The system calculates how much each intermediary takes from the client billing rate:
+
+```
+Client pays (per hour)  = employeeHourlyRate (billing rate)
+Vendor Fee              = Client pays × (vendorFeePercentage / 100)
+Employer Gets           = Client pays - Vendor Fee
+You Get (per hour)      = eightyTwentyRate
+Employer Margin         = Employer Gets - You Get
+```
+
+**Example (Charter/Tellus):**
+| | Per Hour | 160 hrs/month |
+|--|---------|---------------|
+| Client pays | $62.00 | $9,920.00 |
+| Vendor takes (3%) | $1.86 | $297.60 |
+| Employer gets | $60.14 | $9,622.40 |
+| You get (80-20 rate) | $48.11 | $7,697.60 |
+| Employer margin | $12.03 | $1,924.80 |
+
+These analytics are computed on-the-fly from existing data (no additional database columns needed).
+
 ## Project Structure
 
 ```
@@ -52,8 +75,10 @@ payroll-balance-reconciliation-system/
 
 ## Features
 
-- **Dashboard** — Current balance, balance by year/project, totals
-- **Projects** — Manage projects with vendor fee %, 80-20 rate, LCA amount
+- **Dashboard** — Current balance, balance by year/project, totals, vendor fee & employer margin analytics
+- **Vendor Fee Analytics** — Total vendor fee (all time), vendor fee by year, per-project breakdown
+- **Employer Margin Analytics** — Total employer margin, margin by year, margin per hour per project, monthly breakdown
+- **Projects** — Manage projects with vendor fee %, 80-20 rate, LCA amount; view per-project margin details
 - **Monthly Entries** — Multi-entry form, auto-fill from project defaults, edit/delete
 - **Reports** — Monthly, quarterly, yearly reports with PDF/Excel export
 - **Audit Trail** — Paystubs, employer payments, adjustments, yearly balances tracked automatically
