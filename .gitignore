@@ -26,3 +26,8 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+### Docs & Session Files ###
+docs/
+SESSION_LOG.md
+SESSION_NOTES.md

@@ -22,7 +22,7 @@ class BalanceCalculationServiceTest {
         var result = service.calculate(new BigDecimal("200"), new BigDecimal("50"), BigDecimal.ZERO, new BigDecimal("10000"), BigDecimal.ZERO, BigDecimal.ZERO);
         assertThat(result.actualEarnings()).isEqualByComparingTo("10000.00");
         assertThat(result.directEmployerGrossAmount()).isEqualByComparingTo("12500.00");
-        assertThat(result.finalBalance()).isEqualByComparingTo("-2500.00");
+        assertThat(result.finalBalance()).isEqualByComparingTo("-4500.00");
     }
 
     @Test

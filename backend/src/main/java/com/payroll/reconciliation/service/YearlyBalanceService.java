@@ -77,19 +77,16 @@ public class YearlyBalanceService {
                         Collectors.reducing(BigDecimal.ZERO, MonthlyEntry::getMonthlyBalance, BigDecimal::add)
                 ));
 
-        // Calculate carry-forward balances
+        // Calculate carry-forward balances using an atomic upsert to avoid
+        // duplicate-key errors when multiple entries are saved concurrently.
         BigDecimal opening = BigDecimal.ZERO;
         for (Map.Entry<Integer, BigDecimal> item : earnedByYear.entrySet()) {
-            YearlyBalance balance = yearlyBalances.findByBalanceYear(item.getKey())
-                    .orElseGet(YearlyBalance::new);
-            balance.setBalanceYear(item.getKey());
-            balance.setOpeningBalance(opening);
-            balance.setEarnedBalance(item.getValue());
-            balance.setEndingBalance(opening.add(item.getValue()));
-            yearlyBalances.save(balance);
+            BigDecimal earned  = item.getValue();
+            BigDecimal ending  = opening.add(earned);
+            yearlyBalances.upsertByYear(item.getKey(), opening, earned, ending);
 
             // Next year's opening = this year's ending
-            opening = balance.getEndingBalance();
+            opening = ending;
         }
 
         return yearlyBalances.findAll().stream()
