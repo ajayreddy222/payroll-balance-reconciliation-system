@@ -15,10 +15,12 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
 import SaveIcon from '@mui/icons-material/Save';
-import { Button, Grid, IconButton, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Button, Box, Grid, IconButton, Paper, Stack, TextField, Tooltip, Typography, Collapse, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { FormEvent, useEffect, useState } from 'react';
 import api from '../api/client';
-import { Project } from '../types';
+import { Project, ProjectMarginSummary } from '../types';
+
+const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value ?? 0);
 
 /** Default empty form state for the project form. */
 const emptyForm = {
@@ -43,10 +45,16 @@ const emptyForm = {
  */
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [margins, setMargins] = useState<ProjectMarginSummary[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [expandedProject, setExpandedProject] = useState<number | null>(null);
 
-  const load = async () => setProjects((await api.get('/projects')).data);
+  const load = async () => {
+    setProjects((await api.get('/projects')).data);
+    const dashboard = (await api.get('/dashboard')).data;
+    setMargins(dashboard.marginByProject ?? []);
+  };
   useEffect(() => { load(); }, []);
 
   /**
@@ -166,28 +174,85 @@ export default function Projects() {
         </Grid>
       </Paper>
       <Grid container spacing={2}>
-        {projects.map((p) => (
-          <Grid item xs={12} md={4} key={p.id}>
-            <Paper sx={{ p: 2, position: 'relative' }}>
-              <Tooltip title="Edit">
-                <IconButton size="small" sx={{ position: 'absolute', top: 8, right: 8 }} onClick={() => startEdit(p)}>
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Typography variant="h6">{p.projectName}</Typography>
-              <Typography>{p.clientName} / {p.vendorName}</Typography>
-              <Typography color="text.secondary">
-                Rate: ${p.employeeHourlyRate}/hr
-                {p.vendorFeePercentage > 0 && ` | Vendor Fee: ${p.vendorFeePercentage}%`}
-              </Typography>
-              <Typography color="text.secondary">
-                80-20: ${p.eightyTwentyRate}/hr
-                {p.lcaAmount > 0 && ` | LCA: $${p.lcaAmount}`}
-              </Typography>
-              <Typography color="text.secondary">From {p.startDate}</Typography>
-            </Paper>
-          </Grid>
-        ))}
+        {projects.map((p) => {
+          const margin = margins.find(m => m.projectId === p.id);
+          return (
+            <Grid item xs={12} md={4} key={p.id}>
+              <Paper sx={{ p: 2, position: 'relative' }}>
+                <Tooltip title="Edit">
+                  <IconButton size="small" sx={{ position: 'absolute', top: 8, right: 8 }} onClick={() => startEdit(p)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Typography variant="h6">{p.projectName}</Typography>
+                <Typography>{p.clientName} / {p.vendorName}</Typography>
+                <Typography color="text.secondary">
+                  Rate: ${p.employeeHourlyRate}/hr
+                  {p.vendorFeePercentage > 0 && ` | Vendor Fee: ${p.vendorFeePercentage}%`}
+                </Typography>
+                <Typography color="text.secondary">
+                  80-20: ${p.eightyTwentyRate}/hr
+                  {p.lcaAmount > 0 && ` | LCA: $${p.lcaAmount}`}
+                </Typography>
+                <Typography color="text.secondary">From {p.startDate}</Typography>
+
+                {margin && margin.totalHours > 0 && (
+                  <>
+                    <Stack direction="row" spacing={2} sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Vendor Fee</Typography>
+                        <Typography variant="body2" color="error">{money(margin.totalVendorFee)}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Employer Margin</Typography>
+                        <Typography variant="body2" sx={{ color: '#ed6c02' }}>{money(margin.totalEmployerMargin)}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Margin/Hr</Typography>
+                        <Typography variant="body2" sx={{ color: '#ed6c02' }}>{money(margin.employerMarginPerHour)}</Typography>
+                      </Box>
+                    </Stack>
+                    <Button
+                      size="small"
+                      sx={{ mt: 1 }}
+                      onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}
+                    >
+                      {expandedProject === p.id ? 'Hide Monthly' : 'Show Monthly'}
+                    </Button>
+                    <Collapse in={expandedProject === p.id}>
+                      <TableContainer sx={{ mt: 1, maxHeight: 300 }}>
+                        <Table size="small" stickyHeader>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Month</TableCell>
+                              <TableCell align="right">Hrs</TableCell>
+                              <TableCell align="right">Client Pays</TableCell>
+                              <TableCell align="right">Vendor Fee</TableCell>
+                              <TableCell align="right">You Get</TableCell>
+                              <TableCell align="right">Employer Margin</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {margin.monthlyBreakdown.map((m) => (
+                              <TableRow key={m.month}>
+                                <TableCell>{m.month}</TableCell>
+                                <TableCell align="right">{m.hoursWorked}</TableCell>
+                                <TableCell align="right">{money(m.clientPays)}</TableCell>
+                                <TableCell align="right">{money(m.vendorFee)}</TableCell>
+                                <TableCell align="right">{money(m.youGet)}</TableCell>
+                                <TableCell align="right">{money(m.employerMargin)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Collapse>
+                  </>
+                )}
+              </Paper>
+            </Grid>
+          );
+        })}
       </Grid>
     </Stack>
   );
