@@ -14,6 +14,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Entries from './pages/Entries';
 import Login from './pages/Login';
+import Payments from './pages/Payments';
 import Projects from './pages/Projects';
 import Reports from './pages/Reports';
 
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/entries" element={<Entries />} />
+        <Route path="/payments" element={<Payments />} />
         <Route path="/reports" element={<Reports />} />
       </Route>
     </Routes>

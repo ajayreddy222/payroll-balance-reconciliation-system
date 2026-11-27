@@ -14,6 +14,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import FolderIcon from '@mui/icons-material/Folder';
 import PaidIcon from '@mui/icons-material/Paid';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import PaymentsIcon from '@mui/icons-material/AccountBalanceWallet';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { AppBar, Box, Button, Container, Stack, Toolbar, Typography } from '@mui/material';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
@@ -23,6 +24,7 @@ const nav = [
   { label: 'Dashboard', path: '/', icon: <DashboardIcon fontSize="small" /> },
   { label: 'Projects', path: '/projects', icon: <FolderIcon fontSize="small" /> },
   { label: 'Monthly Entries', path: '/entries', icon: <PaidIcon fontSize="small" /> },
+  { label: 'Payments', path: '/payments', icon: <PaymentsIcon fontSize="small" /> },
   { label: 'Reports', path: '/reports', icon: <AssessmentIcon fontSize="small" /> }
 ];
 

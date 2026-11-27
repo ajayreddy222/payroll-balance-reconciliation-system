@@ -177,8 +177,6 @@ public class MonthlyEntryService {
                 entry.getEmployeeHourlyRate(),
                 entry.getActualEarnings(),
                 entry.getPaystubAmountReceived(),
-                entry.getDirectEmployerPayment(),
-                calculator.grossEmployerPayment(entry.getDirectEmployerPayment()),
                 entry.getInsuranceDeduction(),
                 entry.getOtherAdjustment(),
                 entry.getMonthlyBalance(),
@@ -203,7 +201,6 @@ public class MonthlyEntryService {
         entry.setHoursWorked(nz(request.hoursWorked()));
         entry.setEmployeeHourlyRate(nz(request.employeeHourlyRate()));
         entry.setPaystubAmountReceived(nz(request.paystubAmountReceived()));
-        entry.setDirectEmployerPayment(nz(request.directEmployerPayment()));
         entry.setInsuranceDeduction(nz(request.insuranceDeduction()));
         entry.setOtherAdjustment(nz(request.otherAdjustment()));
         entry.setNotes(request.notes());

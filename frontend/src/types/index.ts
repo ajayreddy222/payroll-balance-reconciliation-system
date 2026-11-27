@@ -50,8 +50,6 @@ export type Project = {
  * @property employeeHourlyRate - Hourly rate used for this entry (80-20 rate)
  * @property actualEarnings - Computed: hoursWorked × employeeHourlyRate
  * @property paystubAmountReceived - LCA/paystub amount received from payroll
- * @property directEmployerPayment - Net amount received directly from employer
- * @property directEmployerGrossAmount - Computed: directEmployerPayment ÷ 0.80
  * @property insuranceDeduction - Insurance deduction for the month
  * @property otherAdjustment - Other adjustments (negative = fee, positive = credit)
  * @property monthlyBalance - Computed final balance for the month
@@ -68,13 +66,29 @@ export type MonthlyEntry = {
   employeeHourlyRate: number;
   actualEarnings: number;
   paystubAmountReceived: number;
-  directEmployerPayment: number;
-  directEmployerGrossAmount: number;
   insuranceDeduction: number;
   otherAdjustment: number;
   monthlyBalance: number;
   notes?: string;
 };
+
+/**
+ * Represents a standalone direct payment received from the employer in hand.
+ *
+ * @property id             - Unique payment identifier
+ * @property paymentDate    - Date payment was received (ISO string)
+ * @property amountReceived - Net amount received in hand (what you enter)
+ * @property grossAmount    - Gross amount deducted from balance (amountReceived ÷ 0.80)
+ * @property notes          - Optional notes (e.g., "10L@80")
+ */
+export type DirectPayment = {
+  id: number;
+  paymentDate: string;
+  amountReceived: number;
+  grossAmount: number;
+  notes?: string;
+};
+
 
 /**
  * Aggregated dashboard summary data returned by the /api/dashboard endpoint.
@@ -97,6 +111,7 @@ export type DashboardSummary = {
   totalInsuranceDeductions: number;
   totalVendorFee: number;
   totalEmployerMargin: number;
+  totalDirectPaymentsGross: number;
   balanceByYear: { name: string; amount: number }[];
   balanceByProject: { name: string; amount: number }[];
   vendorFeeByYear: { name: string; amount: number }[];

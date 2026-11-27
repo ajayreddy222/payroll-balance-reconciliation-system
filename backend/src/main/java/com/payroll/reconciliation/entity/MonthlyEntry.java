@@ -51,10 +51,6 @@ public class MonthlyEntry {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal paystubAmountReceived = BigDecimal.ZERO;
 
-    /** The total direct employer payment amount. */
-    @Column(nullable = false, precision = 14, scale = 2)
-    private BigDecimal directEmployerPayment = BigDecimal.ZERO;
-
     /** The total insurance deduction for this month. */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal insuranceDeduction = BigDecimal.ZERO;

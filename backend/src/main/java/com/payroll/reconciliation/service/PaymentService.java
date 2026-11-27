@@ -89,7 +89,7 @@ public class PaymentService {
         payment.setMonthlyEntry(entries.findById(request.monthlyEntryId()).orElseThrow());
         payment.setPaymentDate(request.paymentDate());
         payment.setAmountReceived(request.amountReceived());
-        payment.setGrossAmount(calculator.grossEmployerPayment(request.amountReceived()));
+        payment.setGrossAmount(request.amountReceived().divide(new java.math.BigDecimal("0.80"), 2, java.math.RoundingMode.HALF_UP));
         payment.setNotes(request.notes());
         return toEmployerPayment(employerPayments.save(payment));
     }

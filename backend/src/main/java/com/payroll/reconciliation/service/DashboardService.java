@@ -3,6 +3,7 @@ package com.payroll.reconciliation.service;
 import com.payroll.reconciliation.dto.DashboardDtos.*;
 import com.payroll.reconciliation.entity.MonthlyEntry;
 import com.payroll.reconciliation.entity.Project;
+import com.payroll.reconciliation.repository.DirectPaymentRepository;
 import com.payroll.reconciliation.repository.MonthlyEntryRepository;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +22,13 @@ import java.util.stream.Collectors;
 @Service
 public class DashboardService {
     private final MonthlyEntryRepository entries;
+    private final DirectPaymentRepository directPaymentRepository;
     private static final BigDecimal HUNDRED = new BigDecimal("100");
     private static final DateTimeFormatter MONTH_FMT = DateTimeFormatter.ofPattern("yyyy-MM");
 
-    public DashboardService(MonthlyEntryRepository entries) {
+    public DashboardService(MonthlyEntryRepository entries, DirectPaymentRepository directPaymentRepository) {
         this.entries = entries;
+        this.directPaymentRepository = directPaymentRepository;
     }
 
     /**
@@ -36,11 +39,13 @@ public class DashboardService {
         List<MonthlyEntry> all = entries.findAllWithProject();
 
         // Existing balance metrics
-        BigDecimal currentBalance = sum(all, MonthlyEntry::getMonthlyBalance);
+        BigDecimal totalEarned = sum(all, MonthlyEntry::getMonthlyBalance);
+        // Subtract all direct payments (gross amounts) from the total earned balance
+        BigDecimal totalDirectPaymentsGross = directPaymentRepository.sumGrossAmount();
+        BigDecimal currentBalance = totalEarned.subtract(totalDirectPaymentsGross);
         BigDecimal totalHours = sum(all, MonthlyEntry::getHoursWorked);
         BigDecimal totalActual = sum(all, MonthlyEntry::getActualEarnings);
         BigDecimal totalPaystubs = sum(all, MonthlyEntry::getPaystubAmountReceived);
-        BigDecimal totalEmployerPayments = sum(all, MonthlyEntry::getDirectEmployerPayment);
         BigDecimal totalInsurance = sum(all, MonthlyEntry::getInsuranceDeduction);
 
         // Vendor fee and employer margin totals
@@ -107,8 +112,9 @@ public class DashboardService {
 
         return new DashboardSummary(
                 currentBalance, totalHours, totalActual, totalPaystubs,
-                totalEmployerPayments, totalInsurance,
+                totalInsurance,
                 totalVendorFee, totalEmployerMargin,
+                totalDirectPaymentsGross,
                 balanceByYear, balanceByProject,
                 vendorFeeByYear, employerMarginByYear,
                 marginByProject

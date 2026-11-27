@@ -60,7 +60,6 @@ type EntryRow = {
     hoursWorked: number;
     employeeHourlyRate: number;
     paystubAmountReceived: number;
-    directEmployerPayment: number;
     insuranceDeduction: number;
     otherAdjustment: number;
     notes: string;
@@ -78,7 +77,6 @@ const createEmptyRow = (month: string): EntryRow => ({
     hoursWorked: 0,
     employeeHourlyRate: 0,
     paystubAmountReceived: 0,
-    directEmployerPayment: 0,
     insuranceDeduction: 0,
     otherAdjustment: 0,
     notes: ''
@@ -182,7 +180,6 @@ export default function Entries() {
             hoursWorked: entry.hoursWorked,
             employeeHourlyRate: entry.employeeHourlyRate,
             paystubAmountReceived: entry.paystubAmountReceived,
-            directEmployerPayment: entry.directEmployerPayment,
             insuranceDeduction: entry.insuranceDeduction,
             otherAdjustment: entry.otherAdjustment,
             notes: entry.notes ?? ''
@@ -242,9 +239,6 @@ export default function Entries() {
                             <TextField label="Paystub" type="number" value={editForm.paystubAmountReceived} onChange={(e) => setEditForm({ ...editForm, paystubAmountReceived: Number(e.target.value) })} fullWidth />
                         </Grid>
                         <Grid item xs={12} md={1.4}>
-                            <TextField label="Direct Pay" type="number" value={editForm.directEmployerPayment} onChange={(e) => setEditForm({ ...editForm, directEmployerPayment: Number(e.target.value) })} fullWidth />
-                        </Grid>
-                        <Grid item xs={12} md={1.4}>
                             <TextField label="Insurance" type="number" value={editForm.insuranceDeduction} onChange={(e) => setEditForm({ ...editForm, insuranceDeduction: Number(e.target.value) })} fullWidth />
                         </Grid>
                         <Grid item xs={12} md={1.4}>
@@ -293,9 +287,6 @@ export default function Entries() {
                                 </Grid>
                                 <Grid item xs={6} md={1}>
                                     <TextField label="Paystub" type="number" value={row.paystubAmountReceived} onChange={(e) => updateRow(idx, 'paystubAmountReceived', Number(e.target.value))} fullWidth size="small" />
-                                </Grid>
-                                <Grid item xs={6} md={1}>
-                                    <TextField label="Direct Pay" type="number" value={row.directEmployerPayment} onChange={(e) => updateRow(idx, 'directEmployerPayment', Number(e.target.value))} fullWidth size="small" />
                                 </Grid>
                                 <Grid item xs={6} md={1}>
                                     <TextField label="Insurance" type="number" value={row.insuranceDeduction} onChange={(e) => updateRow(idx, 'insuranceDeduction', Number(e.target.value))} fullWidth size="small" />
@@ -363,7 +354,6 @@ export default function Entries() {
                             <TableCell align="right">Rate</TableCell>
                             <TableCell align="right">Actual</TableCell>
                             <TableCell align="right">Paystub</TableCell>
-                            <TableCell align="right">Direct Gross</TableCell>
                             <TableCell align="right">Insurance</TableCell>
                             <TableCell align="right">Adjustment</TableCell>
                             <TableCell align="right">Balance</TableCell>
@@ -385,7 +375,6 @@ export default function Entries() {
                                 <TableCell align="right">{money(e.employeeHourlyRate)}</TableCell>
                                 <TableCell align="right">{money(e.actualEarnings)}</TableCell>
                                 <TableCell align="right">{money(e.paystubAmountReceived)}</TableCell>
-                                <TableCell align="right">{money(e.directEmployerGrossAmount)}</TableCell>
                                 <TableCell align="right">{money(e.insuranceDeduction)}</TableCell>
                                 <TableCell align="right">{money(e.otherAdjustment)}</TableCell>
                                 <TableCell align="right">{money(e.monthlyBalance)}</TableCell>

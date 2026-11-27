@@ -2,13 +2,11 @@ package com.payroll.reconciliation.service;
 
 import com.payroll.reconciliation.entity.*;
 import com.payroll.reconciliation.repository.AdjustmentRepository;
-import com.payroll.reconciliation.repository.EmployerPaymentRepository;
 import com.payroll.reconciliation.repository.PaystubRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 /**
  * Service responsible for synchronizing detail/audit records in the
@@ -36,24 +34,12 @@ import java.math.RoundingMode;
 @Service
 public class DetailRecordService {
 
-    private static final BigDecimal DIRECT_PAYMENT_NET_RATE = new BigDecimal("0.80");
-
     private final PaystubRepository paystubRepository;
-    private final EmployerPaymentRepository employerPaymentRepository;
     private final AdjustmentRepository adjustmentRepository;
 
-    /**
-     * Constructs a new DetailRecordService with required repositories.
-     *
-     * @param paystubRepository        repository for paystub persistence
-     * @param employerPaymentRepository repository for employer payment persistence
-     * @param adjustmentRepository     repository for adjustment persistence
-     */
     public DetailRecordService(PaystubRepository paystubRepository,
-                               EmployerPaymentRepository employerPaymentRepository,
                                AdjustmentRepository adjustmentRepository) {
         this.paystubRepository = paystubRepository;
-        this.employerPaymentRepository = employerPaymentRepository;
         this.adjustmentRepository = adjustmentRepository;
     }
 
@@ -68,7 +54,6 @@ public class DetailRecordService {
     @Transactional
     public void syncDetailRecords(MonthlyEntry entry) {
         syncPaystub(entry);
-        syncEmployerPayment(entry);
         syncInsuranceAdjustment(entry);
         syncOtherAdjustment(entry);
     }
@@ -84,7 +69,6 @@ public class DetailRecordService {
     @Transactional
     public void removeDetailRecords(Long entryId) {
         paystubRepository.findByMonthlyEntryId(entryId).ifPresent(paystubRepository::delete);
-        employerPaymentRepository.findByMonthlyEntryId(entryId).ifPresent(employerPaymentRepository::delete);
         adjustmentRepository.findByMonthlyEntryIdOrderByAdjustmentDateDesc(entryId)
                 .forEach(adjustmentRepository::delete);
     }
@@ -114,38 +98,6 @@ public class DetailRecordService {
         } else {
             paystubRepository.findByMonthlyEntryId(entry.getId())
                     .ifPresent(paystubRepository::delete);
-        }
-    }
-
-    /**
-     * Syncs the employer payment record for a monthly entry.
-     *
-     * <p>If {@code directEmployerPayment > 0}, creates or updates the employer payment
-     * record with both the net amount and the grossed-up amount (net / 0.80).
-     * If the amount is 0, removes any existing employer payment record.</p>
-     *
-     * @param entry the monthly entry to sync
-     */
-    private void syncEmployerPayment(MonthlyEntry entry) {
-        BigDecimal netAmount = entry.getDirectEmployerPayment();
-
-        if (netAmount != null && netAmount.signum() > 0) {
-            BigDecimal grossAmount = netAmount.divide(DIRECT_PAYMENT_NET_RATE, 2, RoundingMode.HALF_UP);
-
-            EmployerPayment payment = employerPaymentRepository.findByMonthlyEntryId(entry.getId())
-                    .orElseGet(() -> {
-                        EmployerPayment ep = new EmployerPayment();
-                        ep.setMonthlyEntry(entry);
-                        return ep;
-                    });
-            payment.setPaymentDate(entry.getMonth());
-            payment.setAmountReceived(netAmount);
-            payment.setGrossAmount(grossAmount);
-            payment.setNotes(entry.getNotes());
-            employerPaymentRepository.save(payment);
-        } else {
-            employerPaymentRepository.findByMonthlyEntryId(entry.getId())
-                    .ifPresent(employerPaymentRepository::delete);
         }
     }
 

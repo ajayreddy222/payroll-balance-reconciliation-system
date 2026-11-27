@@ -20,7 +20,6 @@ public class MonthlyEntryDtos {
      * @param hoursWorked            the number of hours worked
      * @param employeeHourlyRate     the employee's hourly rate
      * @param paystubAmountReceived  the amount received via paystub
-     * @param directEmployerPayment  optional direct employer payment amount
      * @param insuranceDeduction     optional insurance deduction amount
      * @param otherAdjustment        optional other adjustment amount
      * @param notes                  optional notes for the entry
@@ -31,7 +30,6 @@ public class MonthlyEntryDtos {
             @NotNull BigDecimal hoursWorked,
             @NotNull BigDecimal employeeHourlyRate,
             @NotNull BigDecimal paystubAmountReceived,
-            BigDecimal directEmployerPayment,
             BigDecimal insuranceDeduction,
             BigDecimal otherAdjustment,
             String notes
@@ -50,8 +48,6 @@ public class MonthlyEntryDtos {
      * @param employeeHourlyRate        the employee hourly rate
      * @param actualEarnings            the computed actual earnings (hours * rate)
      * @param paystubAmountReceived     the paystub amount received
-     * @param directEmployerPayment     the direct employer payment amount
-     * @param directEmployerGrossAmount the gross amount of direct employer payment
      * @param insuranceDeduction        the insurance deduction amount
      * @param otherAdjustment           other adjustment amount
      * @param monthlyBalance            the computed monthly balance
@@ -68,8 +64,6 @@ public class MonthlyEntryDtos {
             BigDecimal employeeHourlyRate,
             BigDecimal actualEarnings,
             BigDecimal paystubAmountReceived,
-            BigDecimal directEmployerPayment,
-            BigDecimal directEmployerGrossAmount,
             BigDecimal insuranceDeduction,
             BigDecimal otherAdjustment,
             BigDecimal monthlyBalance,
