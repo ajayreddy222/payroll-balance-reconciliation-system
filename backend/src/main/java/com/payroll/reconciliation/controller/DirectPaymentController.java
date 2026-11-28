@@ -1,5 +1,6 @@
 package com.payroll.reconciliation.controller;
 
+import com.payroll.reconciliation.dto.DirectPaymentDtos.DirectPaymentBatchRequest;
 import com.payroll.reconciliation.dto.DirectPaymentDtos.DirectPaymentRequest;
 import com.payroll.reconciliation.dto.DirectPaymentDtos.DirectPaymentResponse;
 import com.payroll.reconciliation.service.DirectPaymentService;
@@ -9,18 +10,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST controller for managing standalone direct payments.
+ * REST controller for managing the payment ledger.
  *
- * <p>Direct payments are cash or check amounts received from the employer
- * outside of the regular payroll system. They are deducted from the total
- * running balance using the 80-20 gross-up rule.</p>
+ * <p>Handles direct payments (cash/check), fee deductions (perm/legal fees),
+ * and insurance deductions. All entries are deducted from the total running balance.</p>
  *
  * <p>Endpoints:
  * <ul>
- *   <li>GET    /api/direct-payments       — list all payments</li>
- *   <li>POST   /api/direct-payments       — create a payment</li>
- *   <li>PUT    /api/direct-payments/{id}  — update a payment</li>
- *   <li>DELETE /api/direct-payments/{id}  — delete a payment</li>
+ *   <li>GET    /api/direct-payments            — list all entries</li>
+ *   <li>POST   /api/direct-payments            — create a single entry</li>
+ *   <li>POST   /api/direct-payments/batch      — create multiple entries at once</li>
+ *   <li>PUT    /api/direct-payments/{id}       — update an entry</li>
+ *   <li>DELETE /api/direct-payments/{id}       — delete an entry</li>
  * </ul>
  * </p>
  *
@@ -42,9 +43,9 @@ public class DirectPaymentController {
     }
 
     /**
-     * Returns all direct payments ordered by date ascending.
+     * Returns all payment entries ordered by date ascending.
      *
-     * @return list of all direct payment responses
+     * @return list of all payment responses
      */
     @GetMapping
     public List<DirectPaymentResponse> list() {
@@ -52,11 +53,10 @@ public class DirectPaymentController {
     }
 
     /**
-     * Creates a new direct payment.
-     * Enter the net amount received in hand — the system calculates the gross.
+     * Creates a single payment entry.
      *
      * @param request the payment request
-     * @return the created direct payment response
+     * @return the created payment response
      */
     @PostMapping
     public DirectPaymentResponse create(@Valid @RequestBody DirectPaymentRequest request) {
@@ -64,11 +64,22 @@ public class DirectPaymentController {
     }
 
     /**
-     * Updates an existing direct payment by ID.
+     * Creates multiple payment entries in a single request.
+     *
+     * @param batchRequest the batch request containing a list of payments
+     * @return list of created payment responses
+     */
+    @PostMapping("/batch")
+    public List<DirectPaymentResponse> createBatch(@Valid @RequestBody DirectPaymentBatchRequest batchRequest) {
+        return service.createBatch(batchRequest);
+    }
+
+    /**
+     * Updates an existing payment entry by ID.
      *
      * @param id      the payment ID to update
      * @param request the updated payment data
-     * @return the updated direct payment response
+     * @return the updated payment response
      */
     @PutMapping("/{id}")
     public DirectPaymentResponse update(@PathVariable Long id,
@@ -77,7 +88,7 @@ public class DirectPaymentController {
     }
 
     /**
-     * Deletes a direct payment by ID.
+     * Deletes a payment entry by ID.
      *
      * @param id the payment ID to delete
      */

@@ -47,7 +47,7 @@ export default function Dashboard() {
         <Grid item xs={12} md={3}><Metric label="Total Hours" value={(data?.totalHours ?? 0).toLocaleString()} /></Grid>
         <Grid item xs={12} md={3}><Metric label="Actual Earnings" value={money(data?.totalActualEarnings ?? 0)} /></Grid>
         <Grid item xs={12} md={3}><Metric label="Paystub Amount" value={money(data?.totalPaystubAmount ?? 0)} /></Grid>
-        <Grid item xs={12} md={3}><Metric label="Employer Payments" value={money(data?.totalEmployerPayments ?? 0)} /></Grid>
+        <Grid item xs={12} md={3}><Metric label="Total Paid Out (Gross)" value={money(data?.totalDirectPaymentsGross ?? 0)} color="#d32f2f" /></Grid>
         <Grid item xs={12} md={3}><Metric label="Insurance Deductions" value={money(data?.totalInsuranceDeductions ?? 0)} /></Grid>
       </Grid>
 

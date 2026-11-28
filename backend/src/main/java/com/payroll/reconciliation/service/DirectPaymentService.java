@@ -1,8 +1,10 @@
 package com.payroll.reconciliation.service;
 
+import com.payroll.reconciliation.dto.DirectPaymentDtos.DirectPaymentBatchRequest;
 import com.payroll.reconciliation.dto.DirectPaymentDtos.DirectPaymentRequest;
 import com.payroll.reconciliation.dto.DirectPaymentDtos.DirectPaymentResponse;
 import com.payroll.reconciliation.entity.DirectPayment;
+import com.payroll.reconciliation.entity.PaymentType;
 import com.payroll.reconciliation.repository.DirectPaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,12 +14,15 @@ import java.math.RoundingMode;
 import java.util.List;
 
 /**
- * Service for managing standalone direct payments from the employer.
+ * Service for managing the payment ledger.
  *
- * <p>Direct payments are cash or check amounts received outside of the regular
- * payroll system. The 80-20 rule is applied: the employee enters the net amount
- * received in hand, and the system calculates the gross amount (net ÷ 0.80)
- * which is deducted from the total running balance.</p>
+ * <p>Gross-up rules:
+ * <ul>
+ *   <li>DIRECT_PAYMENT: grossAmount = amountReceived ÷ 0.80</li>
+ *   <li>FEE_DEDUCTION: grossAmount = amountReceived (no gross-up)</li>
+ *   <li>PERSONAL_EXPENSE: grossAmount = amountReceived (tracked only, excluded from balance)</li>
+ * </ul>
+ * </p>
  *
  * @author Payroll Reconciliation Team
  */
@@ -38,9 +43,9 @@ public class DirectPaymentService {
     }
 
     /**
-     * Returns all direct payments ordered by payment date ascending.
+     * Returns all payment entries ordered by date ascending.
      *
-     * @return list of all direct payment responses
+     * @return list of all payment responses
      */
     public List<DirectPaymentResponse> list() {
         return repository.findAllByOrderByPaymentDateAsc()
@@ -48,11 +53,10 @@ public class DirectPaymentService {
     }
 
     /**
-     * Creates a new direct payment.
-     * Automatically calculates grossAmount = amountReceived ÷ 0.80.
+     * Creates a single payment entry.
      *
-     * @param request the payment request with net amount received
-     * @return the saved direct payment response
+     * @param request the payment request
+     * @return the saved payment response
      */
     @Transactional
     public DirectPaymentResponse create(DirectPaymentRequest request) {
@@ -62,13 +66,28 @@ public class DirectPaymentService {
     }
 
     /**
-     * Updates an existing direct payment by ID.
-     * Recalculates grossAmount from the new amountReceived.
+     * Creates multiple payment entries in a single transaction.
      *
-     * @param id      the ID of the payment to update
-     * @param request the updated payment data
-     * @return the updated direct payment response
-     * @throws java.util.NoSuchElementException if no payment with the given ID exists
+     * @param batchRequest the batch request
+     * @return list of saved payment responses
+     */
+    @Transactional
+    public List<DirectPaymentResponse> createBatch(DirectPaymentBatchRequest batchRequest) {
+        return batchRequest.payments().stream()
+                .map(request -> {
+                    DirectPayment payment = new DirectPayment();
+                    apply(payment, request);
+                    return toResponse(repository.save(payment));
+                })
+                .toList();
+    }
+
+    /**
+     * Updates an existing payment entry by ID.
+     *
+     * @param id      the ID to update
+     * @param request the updated data
+     * @return the updated payment response
      */
     @Transactional
     public DirectPaymentResponse update(Long id, DirectPaymentRequest request) {
@@ -78,9 +97,9 @@ public class DirectPaymentService {
     }
 
     /**
-     * Deletes a direct payment by ID.
+     * Deletes a payment entry by ID.
      *
-     * @param id the ID of the payment to delete
+     * @param id the ID to delete
      */
     @Transactional
     public void delete(Long id) {
@@ -88,28 +107,36 @@ public class DirectPaymentService {
     }
 
     /**
-     * Returns the total gross amount paid out across all direct payments.
-     * Used by the dashboard to compute the current balance.
+     * Returns the total gross amount that affects the balance.
+     * Excludes PERSONAL_EXPENSE entries.
      *
-     * @return sum of all gross amounts
+     * @return sum of gross amounts for DIRECT_PAYMENT and FEE_DEDUCTION only
      */
     public BigDecimal totalGrossAmount() {
         return repository.sumGrossAmount();
     }
 
     /**
-     * Applies the request fields to a DirectPayment entity and calculates gross amount.
+     * Applies request fields to a DirectPayment entity.
+     * Calculates grossAmount based on payment type.
      *
      * @param payment the entity to populate
      * @param request the request DTO
      */
     private void apply(DirectPayment payment, DirectPaymentRequest request) {
         payment.setPaymentDate(request.paymentDate());
+        payment.setPaymentType(request.paymentType());
+        payment.setPaymentMode(request.paymentMode());
         payment.setAmountReceived(request.amountReceived());
-        payment.setGrossAmount(
-                request.amountReceived().divide(NET_RATE, 2, RoundingMode.HALF_UP)
-        );
         payment.setNotes(request.notes());
+
+        if (request.paymentType() == PaymentType.DIRECT_PAYMENT) {
+            payment.setGrossAmount(
+                    request.amountReceived().divide(NET_RATE, 2, RoundingMode.HALF_UP)
+            );
+        } else {
+            payment.setGrossAmount(request.amountReceived());
+        }
     }
 
     /**
@@ -119,11 +146,15 @@ public class DirectPaymentService {
      * @return the response DTO
      */
     private DirectPaymentResponse toResponse(DirectPayment payment) {
+        boolean affectsBalance = payment.getPaymentType() != PaymentType.PERSONAL_EXPENSE;
         return new DirectPaymentResponse(
                 payment.getId(),
                 payment.getPaymentDate(),
+                payment.getPaymentType(),
+                payment.getPaymentMode(),
                 payment.getAmountReceived(),
                 payment.getGrossAmount(),
+                affectsBalance,
                 payment.getNotes()
         );
     }

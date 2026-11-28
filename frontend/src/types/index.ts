@@ -1,28 +1,11 @@
 ﻿/**
  * @fileoverview TypeScript type definitions for the Payroll Reconciliation application.
  *
- * Defines the shapes of data objects exchanged between the frontend and backend API.
- * These types mirror the backend DTO response records.
- *
  * @module types
  * @author Payroll Reconciliation Team
  */
 
-/**
- * Represents a project configuration with billing rates and LCA settings.
- *
- * @property id - Unique project identifier
- * @property clientName - Name of the end client
- * @property vendorName - Name of the staffing vendor
- * @property projectName - Short name for the project/engagement
- * @property employeeHourlyRate - Base hourly rate before adjustments
- * @property vendorFeePercentage - Vendor fee percentage (e.g., 3 for 3%)
- * @property eightyTwentyRate - Effective rate after vendor fee and 80-20 split
- * @property lcaAmount - LCA (Labor Condition Application) / paystub amount
- * @property startDate - Project start date (ISO string)
- * @property endDate - Optional project end date (ISO string)
- * @property active - Whether the project is currently active
- */
+/** Represents a project configuration with billing rates and LCA settings. */
 export type Project = {
   id: number;
   clientName: string;
@@ -38,22 +21,8 @@ export type Project = {
 };
 
 /**
- * Represents a monthly payroll entry with all computed balance fields.
- *
- * @property id - Unique entry identifier
- * @property projectId - Foreign key to the associated project
- * @property projectName - Denormalized project name for display
- * @property clientName - Denormalized client name for display
- * @property vendorName - Denormalized vendor name for display
- * @property month - Entry month as ISO date string (YYYY-MM-DD, first of month)
- * @property hoursWorked - Total hours worked in the month
- * @property employeeHourlyRate - Hourly rate used for this entry (80-20 rate)
- * @property actualEarnings - Computed: hoursWorked × employeeHourlyRate
- * @property paystubAmountReceived - LCA/paystub amount received from payroll
- * @property insuranceDeduction - Insurance deduction for the month
- * @property otherAdjustment - Other adjustments (negative = fee, positive = credit)
- * @property monthlyBalance - Computed final balance for the month
- * @property notes - Optional free-text notes
+ * Represents a monthly payroll entry.
+ * Insurance is auto-populated from the insurance_rates table on save.
  */
 export type MonthlyEntry = {
   id: number;
@@ -67,47 +36,43 @@ export type MonthlyEntry = {
   actualEarnings: number;
   paystubAmountReceived: number;
   insuranceDeduction: number;
-  otherAdjustment: number;
   monthlyBalance: number;
   notes?: string;
 };
 
-/**
- * Represents a standalone direct payment received from the employer in hand.
- *
- * @property id             - Unique payment identifier
- * @property paymentDate    - Date payment was received (ISO string)
- * @property amountReceived - Net amount received in hand (what you enter)
- * @property grossAmount    - Gross amount deducted from balance (amountReceived ÷ 0.80)
- * @property notes          - Optional notes (e.g., "10L@80")
- */
+/** Payment type — determines gross-up and balance impact. */
+export type PaymentType = 'DIRECT_PAYMENT' | 'FEE_DEDUCTION' | 'PERSONAL_EXPENSE';
+
+/** How the payment was received. Required for DIRECT_PAYMENT. */
+export type PaymentMode = 'ZELLE' | 'CASH' | 'CHECK' | 'ONLINE' | 'PAYSTUB';
+
+/** Represents a payment ledger entry. */
 export type DirectPayment = {
   id: number;
   paymentDate: string;
+  paymentType: PaymentType;
+  paymentMode?: PaymentMode;
   amountReceived: number;
   grossAmount: number;
+  affectsBalance: boolean;
   notes?: string;
 };
 
+/** Represents an insurance rate for a Sep–Aug period. */
+export type InsuranceRate = {
+  id: number;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  monthlyAmount: number;
+  notes?: string;
+};
 
-/**
- * Aggregated dashboard summary data returned by the /api/dashboard endpoint.
- *
- * @property currentBalance - Overall cumulative balance across all years/projects
- * @property totalHours - Sum of all hours worked
- * @property totalActualEarnings - Sum of all actual earnings
- * @property totalPaystubAmount - Sum of all paystub amounts received
- * @property totalEmployerPayments - Sum of all direct employer payments
- * @property totalInsuranceDeductions - Sum of all insurance deductions
- * @property balanceByYear - Balance breakdown grouped by year
- * @property balanceByProject - Balance breakdown grouped by project
- */
+/** Aggregated dashboard summary. */
 export type DashboardSummary = {
   currentBalance: number;
   totalHours: number;
   totalActualEarnings: number;
   totalPaystubAmount: number;
-  totalEmployerPayments: number;
   totalInsuranceDeductions: number;
   totalVendorFee: number;
   totalEmployerMargin: number;

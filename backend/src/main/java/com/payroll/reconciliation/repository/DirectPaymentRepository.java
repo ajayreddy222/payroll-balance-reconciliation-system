@@ -8,25 +8,25 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Spring Data JPA repository for {@link DirectPayment} entities.
+ * Repository for {@link DirectPayment} entities.
  *
  * @author Payroll Reconciliation Team
  */
 public interface DirectPaymentRepository extends JpaRepository<DirectPayment, Long> {
 
     /**
-     * Returns all direct payments ordered by payment date ascending.
+     * Returns all payment entries ordered by payment date ascending.
      *
-     * @return list of all direct payments sorted by date
+     * @return list of all payments sorted by date
      */
     List<DirectPayment> findAllByOrderByPaymentDateAsc();
 
     /**
-     * Returns the sum of all gross amounts across all direct payments.
-     * Used by the dashboard to deduct from the total earned balance.
+     * Returns the total gross amount that affects the running balance.
+     * Excludes PERSONAL_EXPENSE entries — those are tracked only.
      *
-     * @return total gross amount paid out, or zero if no payments exist
+     * @return sum of gross amounts for DIRECT_PAYMENT and FEE_DEDUCTION
      */
-    @Query("SELECT COALESCE(SUM(dp.grossAmount), 0) FROM DirectPayment dp")
+    @Query("SELECT COALESCE(SUM(dp.grossAmount), 0) FROM DirectPayment dp WHERE dp.paymentType <> 'PERSONAL_EXPENSE'")
     BigDecimal sumGrossAmount();
 }

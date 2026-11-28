@@ -9,12 +9,16 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 /**
- * JPA entity representing a direct cash/check payment received from the employer.
+ * JPA entity representing a payment ledger entry.
  *
- * <p>These payments are independent of any specific project or monthly entry.
- * They represent money the employer hands directly to the employee (outside payroll)
- * and are deducted from the total running balance using the 80-20 gross-up rule:
- * {@code grossAmount = amountReceived / 0.80}.</p>
+ * <p>Three types:
+ * <ul>
+ *   <li>{@link PaymentType#DIRECT_PAYMENT} — cash/check from employer, 80-20 gross-up applies,
+ *       payment mode required.</li>
+ *   <li>{@link PaymentType#FEE_DEDUCTION} — perm/legal fee, deducted as-is, affects balance.</li>
+ *   <li>{@link PaymentType#PERSONAL_EXPENSE} — personal expense, tracked only, no balance impact.</li>
+ * </ul>
+ * </p>
  *
  * @author Payroll Reconciliation Team
  */
@@ -28,22 +32,37 @@ public class DirectPayment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** The date the payment was received. */
+    /** The date the payment/deduction occurred. */
     @Column(nullable = false)
     private LocalDate paymentDate;
 
-    /** The net amount received in hand by the employee. */
+    /** The type of this entry — determines gross-up and balance impact. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentType paymentType = PaymentType.DIRECT_PAYMENT;
+
+    /**
+     * How the payment was received.
+     * Required for DIRECT_PAYMENT, optional for FEE_DEDUCTION and PERSONAL_EXPENSE.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column
+    private PaymentMode paymentMode;
+
+    /** The net amount received or the fee/expense amount. */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal amountReceived;
 
     /**
      * The gross amount deducted from the running balance.
-     * Calculated as: {@code amountReceived / 0.80}.
+     * DIRECT_PAYMENT: amountReceived / 0.80.
+     * FEE_DEDUCTION: same as amountReceived.
+     * PERSONAL_EXPENSE: same as amountReceived (but excluded from balance calc).
      */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal grossAmount;
 
-    /** Optional notes (e.g., "10L@80", "13L@81"). */
+    /** Optional notes (e.g. "10L@80", "Perm fee", "Green Card filing"). */
     @Column(columnDefinition = "text")
     private String notes;
 

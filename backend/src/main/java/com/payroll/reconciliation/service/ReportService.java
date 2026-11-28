@@ -81,7 +81,7 @@ public class ReportService {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet(title);
             Row header = sheet.createRow(0);
-            String[] headers = {"Month", "Project", "Client", "Vendor", "Hours", "Rate", "Actual", "Paystub", "Insurance", "Other Adjustment", "Balance", "Notes"};
+            String[] headers = {"Month", "Project", "Client", "Vendor", "Hours", "Rate", "Actual", "Paystub", "Insurance", "Balance", "Notes"};
             for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
             int r = 1;
             for (MonthlyEntry entry : rows) {
@@ -95,9 +95,8 @@ public class ReportService {
                 row.createCell(6).setCellValue(entry.getActualEarnings().doubleValue());
                 row.createCell(7).setCellValue(entry.getPaystubAmountReceived().doubleValue());
                 row.createCell(8).setCellValue(entry.getInsuranceDeduction().doubleValue());
-                row.createCell(9).setCellValue(entry.getOtherAdjustment().doubleValue());
-                row.createCell(10).setCellValue(entry.getMonthlyBalance().doubleValue());
-                row.createCell(11).setCellValue(entry.getNotes() == null ? "" : entry.getNotes());
+                row.createCell(9).setCellValue(entry.getMonthlyBalance().doubleValue());
+                row.createCell(10).setCellValue(entry.getNotes() == null ? "" : entry.getNotes());
             }
             for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
             workbook.write(out);

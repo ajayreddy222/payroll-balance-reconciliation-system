@@ -7,21 +7,23 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * JPA entity representing a monthly payroll reconciliation entry.
- * Contains hours worked, earnings, payments, deductions, and the computed monthly balance.
+ * Contains hours worked, earnings, and the computed monthly balance.
  * Unique per project and month combination.
+ *
+ * <p>Insurance is auto-populated from the {@code insurance_rates} table on save.</p>
  *
  * @author Payroll Reconciliation Team
  */
 @Getter
 @Setter
 @Entity
-@Table(name = "monthly_entries", uniqueConstraints = @UniqueConstraint(name = "uq_monthly_entry_project_month", columnNames = {"project_id", "entry_month"}))
+@Table(name = "monthly_entries", uniqueConstraints = @UniqueConstraint(
+        name = "uq_monthly_entry_project_month", columnNames = {"project_id", "entry_month"}))
 public class MonthlyEntry {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,23 +45,19 @@ public class MonthlyEntry {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal employeeHourlyRate = BigDecimal.ZERO;
 
-    /** Computed actual earnings (hours * rate). */
+    /** Computed actual earnings (hours × rate). */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal actualEarnings = BigDecimal.ZERO;
 
-    /** The total amount received via paystubs. */
+    /** The LCA/paystub amount received from payroll. */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal paystubAmountReceived = BigDecimal.ZERO;
 
-    /** The total insurance deduction for this month. */
+    /** Insurance deduction auto-populated from the insurance_rates table. */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal insuranceDeduction = BigDecimal.ZERO;
 
-    /** Any other adjustment amount for this month. */
-    @Column(nullable = false, precision = 14, scale = 2)
-    private BigDecimal otherAdjustment = BigDecimal.ZERO;
-
-    /** The computed monthly balance (actual earnings - paystub - deductions + payments). */
+    /** The computed monthly balance (actual − paystub − insurance). */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal monthlyBalance = BigDecimal.ZERO;
 
@@ -79,16 +77,4 @@ public class MonthlyEntry {
     /** Timestamp of when this record was last updated (database-managed). */
     @Column(nullable = false, insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
-
-    /** Adjustments associated with this monthly entry. */
-    @OneToMany(mappedBy = "monthlyEntry", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Adjustment> adjustments = new ArrayList<>();
-
-    /** Paystub records associated with this monthly entry. */
-    @OneToMany(mappedBy = "monthlyEntry", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Paystub> paystubs = new ArrayList<>();
-
-    /** Employer payment records associated with this monthly entry. */
-    @OneToMany(mappedBy = "monthlyEntry", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EmployerPayment> employerPayments = new ArrayList<>();
 }
